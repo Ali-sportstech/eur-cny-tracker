@@ -87,8 +87,8 @@ def generate_dashboard():
     # Prognose für nächste 7 Tage
     upcoming = latest.get('daily_forecasts', [])[:7]
     
-    # Prognose für nächste 3 Monate
-    upcoming_months = latest.get('monthly_forecasts', [])[:3]
+    # ALLE monatlichen Prognosen (2026-2030)
+    upcoming_months = latest.get('monthly_forecasts', [])
     
     html = f"""<!DOCTYPE html>
 <html lang="de">

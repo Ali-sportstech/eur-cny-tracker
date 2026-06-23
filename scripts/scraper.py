@@ -71,12 +71,14 @@ def scrape_forecast():
         except:
             continue
     
-    # Extrahiere monatliche Prognosen
+    # Extrahiere monatliche Prognosen (2026-2030)
     monthly_forecasts = []
-    # Suche Monatsnamen in Tabelle: <td><strong>Januar</strong></td> ... <td>7.2-7.5</td> ... <td><strong>7.3</strong></td>
+    
+    # Pattern für Monatsnamen und Werte
     monthly_pattern = r'<td class="tb"><strong>(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)</strong></td>\s*<td class="tb">(\d+\.\d+)-(\d+\.\d+)</td>\s*<td class="tb"><strong>(\d+\.\d+)</strong></td>'
     
-    month_matches = re.findall(monthly_pattern, html)
+    # Pattern für Jahr-Zeilen (z.B. "<td>2026</td>" oder "<td>2028 Fortsetzung</td>")
+    year_pattern = r'<td[^>]*>(202[6-9]|2030)(?:\s+Fortsetzung)?</td>'
     
     month_map = {
         'Januar': '01', 'Februar': '02', 'März': '03', 'April': '04',
@@ -84,22 +86,45 @@ def scrape_forecast():
         'September': '09', 'Oktober': '10', 'November': '11', 'Dezember': '12'
     }
     
-    for match in month_matches[:12]:  # Max 12 Monate
+    # Suche alle Monate OHNE Limit
+    month_matches = re.findall(monthly_pattern, html)
+    
+    # WICHTIG: Die Seite hat 2 Sets von Prognosen:
+    # - EUR → CNY (was wir wollen, erste ~50 matches)
+    # - CNY → EUR (umgekehrt, zweite ~50 matches)
+    # Wir nehmen nur die erste Hälfte
+    month_matches = month_matches[:len(month_matches)//2]
+    
+    # Suche alle Jahre
+    year_matches = re.findall(year_pattern, html)
+    
+    # Baue Liste: Jedes Jahr-Tag startet neuen Jahr-Block
+    current_year = datetime.now().year
+    month_counter = 0
+    
+    # Iteriere über Jahr-Tags in der HTML um Jahr-Wechsel zu erkennen
+    html_parts = re.split(year_pattern, html)
+    
+    # Einfachere Logik: Gehe alle Monate durch und weise Jahre sequenziell zu
+    current_year = datetime.now().year
+    current_month = datetime.now().month
+    last_assigned_month = current_month - 1  # Start: Monate ab aktuellem Monat
+    
+    for match in month_matches:
         try:
             month_str = match[0]
             low = float(match[1])
             high = float(match[2])
             rate = float(match[3])
             
-            month_num = month_map[month_str]
-            year = datetime.now().year
-            # Wenn Monat schon vorbei, nächstes Jahr
-            if int(month_num) < datetime.now().month:
-                year += 1
-            elif int(month_num) == datetime.now().month and datetime.now().day > 15:
-                # Wenn aktueller Monat und nach dem 15., dann zählt als "vorbei"
-                year += 1
-            forecast_date = f"{year}-{month_num}-01"
+            month_num = int(month_map[month_str])
+            
+            # Wenn Monat kleiner als letzter Monat → Jahr++
+            if month_num < last_assigned_month:
+                current_year += 1
+            
+            last_assigned_month = month_num
+            forecast_date = f"{current_year}-{month_num:02d}-01"
             
             monthly_forecasts.append({
                 "date": forecast_date,
@@ -107,15 +132,17 @@ def scrape_forecast():
                 "low": low,
                 "high": high
             })
-        except:
+        except Exception as e:
             continue
+    
+    print(f"✅ Erfasst: {len(monthly_forecasts)} monatliche Prognosen (2026-2030)")
     
     return {
         "timestamp": today,
         "scraped_at": datetime.now().isoformat(),
         "current_rate": current_rate,
         "daily_forecasts": daily_forecasts[:30],  # Max 30 Tage
-        "monthly_forecasts": monthly_forecasts[:12]  # Max 12 Monate
+        "monthly_forecasts": monthly_forecasts  # ALLE Monate (2026-2030)
     }
 
 def get_actual_rate(date_str=None):
@@ -250,8 +277,15 @@ def main():
     if dashboard_script.exists():
         subprocess.run([sys.executable, str(dashboard_script)])
     
+    # 5. Upload to GitHub
+    print("\n📤 Lade zu GitHub hoch...")
+    upload_script = TRACKER_DIR / "scripts/github_upload.py"
+    if upload_script.exists():
+        subprocess.run([sys.executable, str(upload_script)])
+    
     print("\n✅ Fertig!")
-    print(f"Dashboard: ~/.hermes/eur-cny-tracker/dashboard.html")
+    print(f"Dashboard local: ~/.hermes/eur-cny-tracker/dashboard.html")
+    print(f"Dashboard online: https://ali-sportstech.github.io/eur-cny-tracker/dashboard.html")
 
 if __name__ == "__main__":
     main()
