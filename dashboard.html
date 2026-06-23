@@ -175,19 +175,19 @@
         <div class="grid">
             <div class="card">
                 <h2>💱 Aktueller Kurs</h2>
-                <div class="stat-big">7.7299</div>
+                <div class="stat-big">7.7335</div>
                 <div class="stat-label">EUR → CNY</div>
             </div>
             
             <div class="card">
                 <h2>🎯 Prognose-Genauigkeit</h2>
-                <div class="accuracy ">0%</div>
+                <div class="accuracy ">N/A%</div>
                 <div class="stat-label">Durchschnittlicher Fehler (0 Checks)</div>
             </div>
             
             <div class="card">
                 <h2>📈 Datenpunkte</h2>
-                <div class="stat-big">6</div>
+                <div class="stat-big">1</div>
                 <div class="stat-label">Tage getrackt</div>
             </div>
         </div>
@@ -295,47 +295,8 @@
             </div>
         </div>
 
-        <div class="card">
-            <h2>🔄 Prognose-Änderungen (Letzte 7 Tage)</h2>
-            <p style="color: #666; margin-bottom: 15px;">Wie sich die Prognose für den nächsten Tag verändert hat</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Datum</th>
-                        <th>Alte Prognose</th>
-                        <th>Neue Prognose</th>
-                        <th>Änderung</th>
-                    </tr>
-                </thead>
-                <tbody>
-
-                    <tr>
-                        <td>2026-06-23</td>
-                        <td>7.7198</td>
-                        <td>7.7198</td>
-                        <td class="change-negative">↓ 0.0000 (+0.00%)</td>
-                    </tr>
-
-                    <tr>
-                        <td>2026-06-23</td>
-                        <td>7.7198</td>
-                        <td>7.7198</td>
-                        <td class="change-negative">↓ 0.0000 (+0.00%)</td>
-                    </tr>
-
-                    <tr>
-                        <td>2026-06-23</td>
-                        <td>7.7198</td>
-                        <td>7.7198</td>
-                        <td class="change-negative">↓ 0.0000 (+0.00%)</td>
-                    </tr>
-
-                </tbody>
-            </table>
-        </div>
-
         <div class="update-time">
-            Letzte Aktualisierung: 23.06.2026 15:41:53
+            Letzte Aktualisierung: 23.06.2026 15:47:31
         </div>
     </div>
     
@@ -344,10 +305,10 @@
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ["2026-06-23", "2026-06-23", "2026-06-23", "2026-06-23", "2026-06-23", "2026-06-23"],
+                labels: ["2026-06-23"],
                 datasets: [{
                     label: 'EUR/CNY Kurs',
-                    data: [7.7394, 7.7394, 7.7394, 7.7394, 7.7299, 7.7299],
+                    data: [7.7335],
                     borderColor: 'rgb(102, 126, 234)',
                     backgroundColor: 'rgba(102, 126, 234, 0.1)',
                     borderWidth: 3,
