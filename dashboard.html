@@ -175,7 +175,7 @@
         <div class="grid">
             <div class="card">
                 <h2>💱 Aktueller Kurs</h2>
-                <div class="stat-big">7.7285</div>
+                <div class="stat-big">7.7043</div>
                 <div class="stat-label">EUR → CNY</div>
             </div>
             
@@ -187,7 +187,7 @@
             
             <div class="card">
                 <h2>📈 Datenpunkte</h2>
-                <div class="stat-big">2</div>
+                <div class="stat-big">3</div>
                 <div class="stat-label">Tage getrackt</div>
             </div>
         </div>
@@ -593,6 +593,13 @@
 
                     <tr>
                         <td>2026-06-24</td>
+                        <td>7.7138</td>
+                        <td>7.7138</td>
+                        <td class="change-negative">↓ 0.0000 (+0.00%)</td>
+                    </tr>
+
+                    <tr>
+                        <td>2026-06-24</td>
                         <td>7.7198</td>
                         <td>7.7138</td>
                         <td class="change-negative">↓ 0.0060 (-0.08%)</td>
@@ -603,7 +610,7 @@
         </div>
 
         <div class="update-time">
-            Letzte Aktualisierung: 24.06.2026 10:00:35
+            Letzte Aktualisierung: 24.06.2026 14:47:42
         </div>
     </div>
     
@@ -612,10 +619,10 @@
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ["2026-06-23", "2026-06-24"],
+                labels: ["2026-06-23", "2026-06-24", "2026-06-24"],
                 datasets: [{
                     label: 'EUR/CNY Kurs',
-                    data: [7.7335, 7.7285],
+                    data: [7.7335, 7.7285, 7.7043],
                     borderColor: 'rgb(102, 126, 234)',
                     backgroundColor: 'rgba(102, 126, 234, 0.1)',
                     borderWidth: 3,
