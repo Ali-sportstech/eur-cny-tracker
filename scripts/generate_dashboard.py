@@ -346,8 +346,9 @@ def generate_dashboard():
                     <thead>
                         <tr>
                             <th>Monat</th>
-                            <th>Prognose</th>
-                            <th>Range</th>
+                            <th>Prognose (Ende)</th>
+                            <th>Range (Min-Max)</th>
+                            <th>Sum%</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -360,12 +361,19 @@ def generate_dashboard():
         low = month.get('low', 'N/A')
         high = month.get('high', 'N/A')
         range_str = f"{low} - {high}" if low != 'N/A' else 'N/A'
+        sum_pct = month.get('sum_pct')
+        if sum_pct is not None:
+            sp_color = "#2e7d32" if sum_pct >= 0 else "#c62828"
+            sum_str = f'<span style="color:{sp_color};">{sum_pct:+.1f}%</span>'
+        else:
+            sum_str = '–'
         
         html += f"""
                         <tr>
                             <td>{formatted_month}</td>
                             <td><strong>{rate}</strong></td>
                             <td>{range_str}</td>
+                            <td>{sum_str}</td>
                         </tr>
 """
     
@@ -494,6 +502,44 @@ def generate_dashboard():
                         <td>{v['max_swing']:.4f}</td>
                         <td>{actual_str}</td>
                         <td style="color:{verdict_color};font-weight:600;">{verdict}</td>
+                    </tr>
+"""
+        html += """
+                </tbody>
+            </table>
+        </div>
+"""
+
+    # === ZENTRALBANK-EVENTS ===
+    events_data = load_json(DATA_DIR / "events.json", {})
+    all_events = events_data.get("events", [])
+    from datetime import date as _date
+    today_str = _date.today().isoformat()
+    upcoming_ev = [e for e in all_events if e["date"] >= today_str][:12]
+    if upcoming_ev:
+        html += """
+        <div class="card" style="grid-column: 1 / -1; border-left: 5px solid #1565c0;">
+            <h2>📆 Zentralbank-Termine (EZB · Fed · PBoC)</h2>
+            <p style="color: #666; margin-bottom: 15px;">
+                Zinsentscheide bewegen den Kurs: EZB wirkt auf EUR, die Fed über die USD-Verkettung,
+                die PBoC auf CNY. An diesen Tagen genau hinschauen.
+            </p>
+            <table>
+                <thead>
+                    <tr><th>Datum</th><th>Notenbank</th><th>Ereignis</th><th>Wirkung auf</th></tr>
+                </thead>
+                <tbody>
+"""
+        for e in upcoming_ev:
+            d = datetime.fromisoformat(e["date"]).strftime("%d.%m.%Y")
+            delta = (datetime.fromisoformat(e["date"]).date() - _date.today()).days
+            urgency = "color:#c62828;font-weight:700;" if delta <= 3 else ""
+            html += f"""
+                    <tr>
+                        <td style="{urgency}">{d} ({delta}T)</td>
+                        <td>{e['icon']} {e['bank']}</td>
+                        <td>{e['type']}</td>
+                        <td>{e['currency']} – {e['impact']}</td>
                     </tr>
 """
         html += """

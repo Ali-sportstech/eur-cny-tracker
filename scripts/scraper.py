@@ -79,8 +79,8 @@ def scrape_forecast():
     # Extrahiere monatliche Prognosen (2026-2030)
     monthly_forecasts = []
     
-    # Pattern für Monatsnamen und Werte
-    monthly_pattern = r'<td class="tb"><strong>(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)</strong></td>\s*<td class="tb">(\d+\.\d+)-(\d+\.\d+)</td>\s*<td class="tb"><strong>(\d+\.\d+)</strong></td>'
+    # Pattern für Monatsnamen und Werte (inkl. Sum% Spalte: kumulierte Veränderung)
+    monthly_pattern = r'<td class="tb"><strong>(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)</strong></td>\s*<td class="tb">(\d+\.\d+)-(\d+\.\d+)</td>\s*<td class="tb"><strong>(\d+\.\d+)</strong></td>\s*<td class="tb">(-?\d+\.?\d*)%</td>'
     
     # Pattern für Jahr-Zeilen (z.B. "<td>2026</td>" oder "<td>2028 Fortsetzung</td>")
     year_pattern = r'<td[^>]*>(202[6-9]|2030)(?:\s+Fortsetzung)?</td>'
@@ -121,6 +121,7 @@ def scrape_forecast():
             low = float(match[1])
             high = float(match[2])
             rate = float(match[3])
+            sum_pct = float(match[4])  # kumulierte Veränderung in % (Sum%-Spalte)
             
             month_num = int(month_map[month_str])
             
@@ -135,7 +136,8 @@ def scrape_forecast():
                 "date": forecast_date,
                 "rate": rate,
                 "low": low,
-                "high": high
+                "high": high,
+                "sum_pct": sum_pct
             })
         except Exception as e:
             continue

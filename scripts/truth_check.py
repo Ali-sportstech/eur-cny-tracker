@@ -234,6 +234,61 @@ def detect_suspicious_revisions(revisions, ecb_rates, swing_threshold=0.01):
 # ---------------------------------------------------------------------------
 # 3. PROGNOSE vs ECB-WAHRHEIT (ehrliche Accuracy)
 # ---------------------------------------------------------------------------
+def monthly_truth(ecb_rates):
+    """
+    Bewertet die MONATS-Prognosen (Ende-Wert + Sum%) des Anbieters.
+    Vergleicht die früheste Monatsprognose je Ziel-Monat gegen den
+    tatsächlichen ECB-Monatsschluss (letzter verfügbarer ECB-Kurs im Monat).
+
+    Die Sum%-Spalte des Anbieters ist die kumulierte Veränderung ggü. heute;
+    wir prüfen, ob die Richtung & Größenordnung mit der Realität übereinstimmt.
+    """
+    forecasts = load_forecasts()
+
+    # ECB-Monatsschluss: letzter ECB-Kurs je Monat (YYYY-MM)
+    ecb_month_close = {}
+    for d in sorted(ecb_rates):
+        ecb_month_close[d[:7]] = ecb_rates[d]  # späterer Tag überschreibt -> Monatsende
+
+    # Früheste Monatsprognose je Ziel-Monat
+    first_monthly = {}   # "YYYY-MM" -> (made, rate, sum_pct)
+    for fc in forecasts:
+        made = fc.get("timestamp")
+        for m in fc.get("monthly_forecasts", []):
+            ym = m["date"][:7]
+            if made and made[:7] < ym:  # Prognose vor dem Ziel-Monat
+                if ym not in first_monthly or made < first_monthly[ym][0]:
+                    first_monthly[ym] = (made, m["rate"], m.get("sum_pct"))
+
+    checks = []
+    for ym, (made, rate, sum_pct) in sorted(first_monthly.items()):
+        actual = ecb_month_close.get(ym)
+        if actual is None:
+            continue
+        err = abs(rate - actual)
+        checks.append({
+            "target_month": ym,
+            "forecast_made": made,
+            "predicted_rate": round(rate, 4),
+            "predicted_sum_pct": sum_pct,
+            "actual_ecb_close": round(actual, 4),
+            "error": round(err, 4),
+            "error_pct": round(err / actual * 100, 3),
+        })
+
+    if checks:
+        avg_err_pct = sum(c["error_pct"] for c in checks) / len(checks)
+    else:
+        avg_err_pct = 0.0
+
+    return {
+        "method": "Früheste Monatsprognose vs ECB-Monatsschluss",
+        "months_checked": len(checks),
+        "avg_error_pct": round(avg_err_pct, 3),
+        "checks": checks,
+    }
+
+
 def truth_accuracy(ecb_rates):
     """
     Vergleicht JEDE Prognose des Anbieters gegen den offiziellen ECB-Kurs
@@ -302,7 +357,12 @@ def run():
 
     print("🎯 Berechne ehrliche Accuracy (Prognose vs ECB)...")
     truth = truth_accuracy(ecb)
-    print(f"   Geprüft: {truth['predictions_checked']}, Ø-Fehler: {truth['avg_error_pct']}%")
+    print(f"   Täglich geprüft: {truth['predictions_checked']}, Ø-Fehler: {truth['avg_error_pct']}%")
+
+    monthly = monthly_truth(ecb)
+    truth["monthly"] = monthly
+    json.dump(truth, open(TRUTH_FILE, "w"), indent=2)
+    print(f"   Monatlich geprüft: {monthly['months_checked']}, Ø-Fehler: {monthly['avg_error_pct']}%")
 
     return {"ecb": ecb, "revisions": revisions, "flags": flags, "truth": truth}
 
