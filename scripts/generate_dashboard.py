@@ -12,7 +12,19 @@ TRACKER_DIR = Path.home() / ".hermes/eur-cny-tracker"
 DATA_DIR = TRACKER_DIR / "data"
 FORECAST_FILE = DATA_DIR / "forecasts.jsonl"
 ACCURACY_FILE = DATA_DIR / "accuracy.json"
+ECB_FILE = DATA_DIR / "ecb_rates.json"
+REVISIONS_FILE = DATA_DIR / "revisions.json"
+TRUTH_FILE = DATA_DIR / "truth_accuracy.json"
 DASHBOARD_FILE = TRACKER_DIR / "dashboard.html"
+
+def load_json(path, default):
+    if not path.exists():
+        return default
+    try:
+        return json.load(open(path))
+    except Exception:
+        return default
+
 
 def load_forecasts():
     """Lädt alle Prognosen"""
@@ -399,7 +411,97 @@ def generate_dashboard():
             </table>
         </div>
 """
-    
+
+    # === WAHRHEITS-CHECK: ECB-Anker + Revisions-Tracking ===
+    ecb = load_json(ECB_FILE, {})
+    truth = load_json(TRUTH_FILE, {})
+    revisions = load_json(REVISIONS_FILE, {})
+
+    if ecb:
+        ecb_latest_date = max(ecb)
+        ecb_latest_rate = ecb[ecb_latest_date]
+        truth_checks = truth.get("predictions_checked", 0)
+        truth_err = truth.get("avg_error_pct", "N/A")
+        html += f"""
+        <div class="card" style="grid-column: 1 / -1; border-left: 5px solid #2e7d32;">
+            <h2>🏦 Wahrheits-Check gegen offiziellen ECB-Referenzkurs</h2>
+            <p style="color: #666; margin-bottom: 15px;">
+                Der EZB-Referenzkurs (täglich ~16:00 CET fixiert) ist der unabhängige Wahrheits-Anker.
+                Die Prognose wird gegen die <strong>erste</strong> abgegebene Vorhersage geprüft –
+                so können nachträgliche Revisionen die Trefferquote nicht künstlich schönen.
+            </p>
+            <div style="display:flex; gap:30px; flex-wrap:wrap;">
+                <div><div style="font-size:0.9em;color:#888;">ECB-Schlusskurs ({ecb_latest_date})</div>
+                     <div style="font-size:1.8em;font-weight:700;color:#2e7d32;">{ecb_latest_rate:.4f}</div></div>
+                <div><div style="font-size:0.9em;color:#888;">Ehrliche Treffsicherheit</div>
+                     <div style="font-size:1.8em;font-weight:700;">{truth_err}% Ø-Fehler</div></div>
+                <div><div style="font-size:0.9em;color:#888;">Geprüfte Prognosen</div>
+                     <div style="font-size:1.8em;font-weight:700;">{truth_checks}</div></div>
+            </div>
+        </div>
+"""
+
+    # Revisions-Tabelle: nachträglich geänderte Prognosen
+    big_rev = [(d, v) for d, v in revisions.items()
+               if v.get("num_revisions", 0) > 0 and v.get("max_swing", 0) >= 0.01]
+    big_rev.sort(key=lambda x: -x[1]["max_swing"])
+    if big_rev:
+        html += f"""
+        <div class="card" style="grid-column: 1 / -1; border-left: 5px solid #c62828;">
+            <h2>🕵️ Prognose-Revisionen (Manipulations-Check)</h2>
+            <p style="color: #666; margin-bottom: 15px;">
+                {len(big_rev)} Ziel-Daten, für die der Anbieter seine Prognose nachträglich verändert hat.
+                Rückt eine Revision die Prognose näher an den später eingetretenen ECB-Kurs, ist das ein
+                Warnsignal für nachträgliche Schönung.
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ziel-Datum</th>
+                        <th>Erste Prognose</th>
+                        <th>Letzte Prognose</th>
+                        <th>Drift</th>
+                        <th>Max-Swing</th>
+                        <th>ECB-Ist</th>
+                        <th>Bewertung</th>
+                    </tr>
+                </thead>
+                <tbody>
+"""
+        for d, v in big_rev[:20]:
+            actual = ecb.get(d)
+            actual_str = f"{actual:.4f}" if actual is not None else "–"
+            verdict = ""
+            verdict_color = "#666"
+            if actual is not None:
+                fe = abs(v["first_predicted"] - actual)
+                le = abs(v["last_predicted"] - actual)
+                if le < fe - 0.001:
+                    verdict = f"⚠️ Schönung (+{fe-le:.4f} näher)"
+                    verdict_color = "#c62828"
+                elif fe < le - 0.001:
+                    verdict = "✓ Revision verschlechterte"
+                    verdict_color = "#2e7d32"
+                else:
+                    verdict = "neutral"
+            drift_color = "#2e7d32" if v["total_drift"] >= 0 else "#c62828"
+            html += f"""
+                    <tr>
+                        <td>{d}</td>
+                        <td>{v['first_predicted']:.4f}</td>
+                        <td>{v['last_predicted']:.4f}</td>
+                        <td style="color:{drift_color};">{v['total_drift']:+.4f} ({v['total_drift_pct']:+.2f}%)</td>
+                        <td>{v['max_swing']:.4f}</td>
+                        <td>{actual_str}</td>
+                        <td style="color:{verdict_color};font-weight:600;">{verdict}</td>
+                    </tr>
+"""
+        html += """
+                </tbody>
+            </table>
+        </div>
+"""
+
     # Chart-Daten vorbereiten
     chart_labels = json.dumps(chart_dates[-30:])
     chart_data = json.dumps(chart_rates[-30:])

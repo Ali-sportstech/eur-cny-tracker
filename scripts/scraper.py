@@ -46,13 +46,18 @@ def scrape_forecast():
     daily_pattern = r'<td class="tb">(\d{2}\.\d{2})</td>\s*<td class="tb">(?:Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)</td>\s*<td class="tb"><strong>(\d+\.\d+)</strong></td>\s*<td class="tb">(\d+\.\d+)</td>\s*<td class="tb">(\d+\.\d+)</td>'
     
     matches = re.findall(daily_pattern, html)
-    
-    for match in matches[:30]:  # Max 30 Tage
+
+    for match in matches[:60]:  # Mehr Puffer - wird unten gefiltert
         try:
             date_str = match[0]  # DD.MM
             rate = float(match[1])
             low = float(match[2])
             high = float(match[3])
+
+            # WICHTIG: Die Seite enthält auch die invertierte CNY→EUR Tabelle
+            # (Werte ~0.13). Nur EUR→CNY behalten (Kurs > 1).
+            if rate < 1.0:
+                continue
             
             # Parse Datum (Format: DD.MM)
             day, month = date_str.split('.')
