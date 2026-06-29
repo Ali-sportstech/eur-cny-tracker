@@ -175,19 +175,19 @@
         <div class="grid">
             <div class="card">
                 <h2>💱 Aktueller Kurs</h2>
-                <div class="stat-big">7.7484</div>
+                <div class="stat-big">7.7457</div>
                 <div class="stat-label">EUR → CNY</div>
             </div>
             
             <div class="card">
                 <h2>🎯 Prognose-Genauigkeit</h2>
                 <div class="accuracy bad">49.4%</div>
-                <div class="stat-label">Durchschnittlicher Fehler (14 Checks)</div>
+                <div class="stat-label">Durchschnittlicher Fehler (20 Checks)</div>
             </div>
             
             <div class="card">
                 <h2>📈 Datenpunkte</h2>
-                <div class="stat-big">9</div>
+                <div class="stat-big">10</div>
                 <div class="stat-label">Tage getrackt</div>
             </div>
         </div>
@@ -650,6 +650,13 @@
                     </tr>
 
                     <tr>
+                        <td>2026-06-29</td>
+                        <td>7.7596</td>
+                        <td>7.7596</td>
+                        <td class="change-negative">↓ 0.0000 (+0.00%)</td>
+                    </tr>
+
+                    <tr>
                         <td>2026-06-27</td>
                         <td>7.7135</td>
                         <td>7.7596</td>
@@ -675,13 +682,6 @@
                         <td>7.7138</td>
                         <td>7.7232</td>
                         <td class="change-positive">↑ 0.0094 (+0.12%)</td>
-                    </tr>
-
-                    <tr>
-                        <td>2026-06-24</td>
-                        <td>7.7138</td>
-                        <td>7.7138</td>
-                        <td class="change-negative">↓ 0.0000 (+0.00%)</td>
                     </tr>
 
                     <tr>
@@ -1038,7 +1038,7 @@
         </div>
 
         <div class="update-time">
-            Letzte Aktualisierung: 29.06.2026 09:19:21
+            Letzte Aktualisierung: 29.06.2026 10:00:20
         </div>
     </div>
     
@@ -1047,10 +1047,10 @@
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ["2026-06-23", "2026-06-24", "2026-06-24", "2026-06-24", "2026-06-25", "2026-06-25", "2026-06-26", "2026-06-27", "2026-06-29"],
+                labels: ["2026-06-23", "2026-06-24", "2026-06-24", "2026-06-24", "2026-06-25", "2026-06-25", "2026-06-26", "2026-06-27", "2026-06-29", "2026-06-29"],
                 datasets: [{
                     label: 'EUR/CNY Kurs',
-                    data: [7.7335, 7.7285, 7.7043, 7.7043, 7.7244, 7.7285, 7.7447, 7.7331, 7.7484],
+                    data: [7.7335, 7.7285, 7.7043, 7.7043, 7.7244, 7.7285, 7.7447, 7.7331, 7.7484, 7.7457],
                     borderColor: 'rgb(102, 126, 234)',
                     backgroundColor: 'rgba(102, 126, 234, 0.1)',
                     borderWidth: 3,
